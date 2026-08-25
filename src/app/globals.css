@@ -1,0 +1,99 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    --maroon: #6B1D2F;
+    --maroon-dark: #4A121F;
+    --maroon-light: #FDF2F4;
+    --terracotta: #C85A32;
+    --terracotta-dark: #A3421F;
+    --terracotta-light: #FDF6F0;
+    --beige: #F7F3EE;
+    --cream: #FDFAF6;
+    --green: #2C5E43;
+    --green-light: #EBF4EF;
+    --charcoal: #1F2421;
+    --charcoal-muted: #59615C;
+    --ochre: #D99B26;
+    --border-beige: #E6DFD5;
+  }
+
+  body {
+    background-color: var(--cream);
+    color: var(--charcoal);
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+    overflow-x: hidden;
+  }
+}
+
+/* Custom Design System Utilities */
+.bg-maroon { background-color: var(--maroon); }
+.bg-maroon-dark { background-color: var(--maroon-dark); }
+.bg-maroon-light { background-color: var(--maroon-light); }
+
+.bg-terracotta { background-color: var(--terracotta); }
+.bg-terracotta-dark { background-color: var(--terracotta-dark); }
+.bg-terracotta-light { background-color: var(--terracotta-light); }
+
+.bg-beige { background-color: var(--beige); }
+.bg-cream { background-color: var(--cream); }
+.bg-craft-green { background-color: var(--green); }
+.bg-craft-green-light { background-color: var(--green-light); }
+.bg-charcoal { background-color: var(--charcoal); }
+
+.text-maroon { color: var(--maroon); }
+.text-terracotta { color: var(--terracotta); }
+.text-craft-green { color: var(--green); }
+.text-charcoal { color: var(--charcoal); }
+.text-charcoal-muted { color: var(--charcoal-muted); }
+.text-ochre { color: var(--ochre); }
+
+.border-beige { border-color: var(--border-beige); }
+.border-maroon { border-color: var(--maroon); }
+.border-terracotta { border-color: var(--terracotta); }
+
+/* Glassmorphism & Soft Card Elevation */
+.glass-panel {
+  background: rgba(253, 250, 246, 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--border-beige);
+}
+
+.craft-card {
+  background-color: var(--cream);
+  border: 1px solid var(--border-beige);
+  border-radius: 0.75rem;
+  transition: all 0.25s ease-in-out;
+}
+
+.craft-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px -5px rgba(31, 36, 33, 0.08), 0 8px 10px -6px rgba(31, 36, 33, 0.04);
+  border-color: #D6CBBF;
+}
+
+/* Subtle Craft Motif Pattern */
+.bg-craft-pattern {
+  background-color: #F7F3EE;
+  background-image: radial-gradient(#C85A32 0.75px, transparent 0.75px), radial-gradient(#6B1D2F 0.75px, #F7F3EE 0.75px);
+  background-size: 30px 30px;
+  background-position: 0 0, 15px 15px;
+  background-opacity: 0.05;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: var(--beige);
+}
+::-webkit-scrollbar-thumb {
+  background: #C8B8A6;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--terracotta);
+}
