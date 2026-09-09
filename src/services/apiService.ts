@@ -7,12 +7,15 @@ import {
   MOCK_MARKET_INSIGHTS,
   MOCK_DASHBOARD_STATS
 } from '../data/mockData';
-import { predictPrice } from './pricePredictionService';
+import { predictPrice, predictPriceRange } from './pricePredictionService';
 import { getBuyerRecommendations } from './recommendationService';
+import { enhanceProductImage } from './imageEnhancerService';
+import { analyzeProductImage } from './catalogAIService';
+import { generateProductListingDescription } from './descriptionAIService';
 
 /**
  * Unified API Service Abstraction Layer.
- * Provides a clean interface for all data fetching and mutations.
+ * Provides a clean interface for all data fetching, mutations, and AI services.
  * Easily replace with `fetch('/api/v1/...')` when FastAPI backend is ready.
  */
 export const apiService = {
@@ -148,17 +151,22 @@ export const apiService = {
       name: newProduct.name || 'Untitled Craft',
       craft: newProduct.craft || 'Custom Handicraft',
       category: newProduct.category || 'Decor',
+      subcategory: newProduct.subcategory || 'Artisan Decor',
       region: newProduct.region || 'India',
       state: newProduct.state || 'Gujarat',
       artisanId: newProduct.artisanId || 'art-1',
       artisanName: newProduct.artisanName || 'Pabiben Rabari',
       material: newProduct.material || 'Traditional Materials',
       description: newProduct.description || 'Authentic artisan product.',
+      shortDescription: newProduct.shortDescription || newProduct.description?.slice(0, 120),
+      keyFeatures: newProduct.keyFeatures || ['Handmade Artisan Product'],
       price: newProduct.price || 1500,
       estimatedCost: newProduct.estimatedCost || 900,
       rating: 5.0,
       reviewCount: 1,
       image: newProduct.image || 'https://images.unsplash.com/photo-1606744888344-493238951221?auto=format&fit=crop&w=800&q=80',
+      enhancedImage: newProduct.enhancedImage,
+      isAiAssisted: newProduct.isAiAssisted ?? true,
       tags: newProduct.tags || ['Handmade'],
       isVerifiedArtisan: true,
       aiFairPriceRange: {
@@ -172,8 +180,12 @@ export const apiService = {
     return created;
   },
 
-  // POST /api/predict-price
+  // AI Services Integration
+  enhanceImage: enhanceProductImage,
+  analyzeCatalog: analyzeProductImage,
+  generateDescription: generateProductListingDescription,
   predictPrice,
+  predictPriceRange,
 
   // POST /api/recommendations
   getRecommendations: getBuyerRecommendations

@@ -48,9 +48,9 @@ export const MOCK_PRODUCTS: Product[] = [
     estimatedCost: 1650,
     rating: 4.8,
     reviewCount: 52,
-    image: 'https://images.unsplash.com/photo-1579783902614-a3fb3927b675?auto=format&fit=crop&w=800&q=80',
+    image: 'https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?auto=format&fit=crop&w=800&q=80',
     gallery: [
-      'https://images.unsplash.com/photo-1579783902614-a3fb3927b675?auto=format&fit=crop&w=800&q=80'
+      'https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?auto=format&fit=crop&w=800&q=80'
     ],
     tags: ['Madhubani', 'Natural Dyes', 'Folk Art', 'Mithila'],
     dimensions: '18 x 24 inches',
@@ -761,7 +761,7 @@ export const MOCK_CRAFT_CATEGORIES: CraftCategory[] = [
     region: 'Mithila',
     state: 'Bihar',
     artisanCount: 2400,
-    image: 'https://images.unsplash.com/photo-1579783902614-a3fb3927b675?auto=format&fit=crop&w=600&q=80',
+    image: 'https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?auto=format&fit=crop&w=600&q=80',
     historySnippet: 'Historically painted by women on fresh mud walls during weddings and festivals.'
   },
   {
@@ -863,7 +863,7 @@ export const MOCK_REGIONS: RegionInfo[] = [
     artisanCount: 8400,
     craftClusters: ['Jitwarpur', 'Ranti', 'Madhubani', 'Darbhanga'],
     description: 'Historical cradle of Mithila folk art where vibrant geometric and deity paintings decorate mud dwellings and natural paper handmade sheets.',
-    image: 'https://images.unsplash.com/photo-1579783902614-a3fb3927b675?auto=format&fit=crop&w=800&q=80'
+    image: 'https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?auto=format&fit=crop&w=800&q=80'
   },
   {
     state: 'Rajasthan',

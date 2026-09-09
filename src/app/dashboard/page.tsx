@@ -35,8 +35,11 @@ import {
   CartesianGrid,
   Cell
 } from 'recharts';
+import { useAuth } from '../../hooks/useAuth';
+import { ShieldCheck as ShieldIcon, LogIn } from 'lucide-react';
 
 export default function ArtisanDashboardPage() {
+  const { user, role, isLoaded } = useAuth();
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [myProducts, setMyProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
@@ -76,8 +79,35 @@ export default function ArtisanDashboardPage() {
     }
   };
 
-  if (loading || !stats) {
+  if (!isLoaded || loading || !stats) {
     return <LoadingState message="Loading Artisan Dashboard analytics..." />;
+  }
+
+  if (role !== 'artisan') {
+    return (
+      <div className="max-w-md mx-auto my-16 px-4">
+        <div className="craft-card p-8 text-center space-y-4">
+          <div className="w-12 h-12 rounded-2xl bg-[#FDF2F4] text-[#6B1D2F] flex items-center justify-center mx-auto border border-[#6B1D2F]/20 font-bold">
+            <ShieldIcon className="w-6 h-6" />
+          </div>
+          <div className="space-y-1">
+            <h2 className="text-xl font-extrabold text-[#1F2421]">Artisan Access Required</h2>
+            <p className="text-xs text-[#59615C] leading-relaxed">
+              The Artisan Dashboard and AI Management Studio are reserved for registered Karigars and craft producers.
+            </p>
+          </div>
+          <div className="pt-2">
+            <Link
+              href="/login"
+              className="bg-[#6B1D2F] hover:bg-[#4A121F] text-white px-6 py-2.5 rounded-xl font-bold text-xs shadow-md transition-all inline-flex items-center gap-1.5"
+            >
+              <LogIn className="w-4 h-4" />
+              <span>Sign In as Artisan</span>
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   const COLORS = ['#6B1D2F', '#C85A32', '#2C5E43', '#D99B26'];
@@ -159,6 +189,103 @@ export default function ArtisanDashboardPage() {
           trendType="positive"
           colorTheme="terracotta"
         />
+      </div>
+
+      {/* AI Tools Studio Section (SIH26090 Feature Hub) */}
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Sparkles className="w-4 h-4 text-[#D99B26]" />
+            <h2 className="text-base font-bold text-[#1F2421]">Artisan AI Tools Studio</h2>
+          </div>
+          <span className="text-xs text-[#59615C] font-semibold">SIH26090 Smart Cataloging Suite</span>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 text-xs">
+          {/* Card 1: Image Studio */}
+          <Link
+            href="/dashboard/add-product?step=2"
+            className="craft-card p-4 flex flex-col justify-between space-y-3 group hover:border-[#C85A32] transition-all"
+          >
+            <div className="space-y-1.5">
+              <div className="w-8 h-8 rounded-lg bg-[#FDF6F0] text-[#C85A32] flex items-center justify-center font-bold border border-[#C85A32]/20">
+                ✨
+              </div>
+              <h3 className="font-bold text-sm text-[#1F2421] group-hover:text-[#6B1D2F] transition-colors">
+                Image Studio
+              </h3>
+              <p className="text-[#59615C] text-[11px] leading-relaxed">
+                Background cleanup, lighting correction, and 4:3 studio aspect ratio auto-crop.
+              </p>
+            </div>
+            <span className="text-[#C85A32] font-semibold text-[11px] flex items-center gap-1">
+              Launch Studio →
+            </span>
+          </Link>
+
+          {/* Card 2: Smart Catalog */}
+          <Link
+            href="/dashboard/add-product?step=3"
+            className="craft-card p-4 flex flex-col justify-between space-y-3 group hover:border-[#2C5E43] transition-all"
+          >
+            <div className="space-y-1.5">
+              <div className="w-8 h-8 rounded-lg bg-[#EBF4EF] text-[#2C5E43] flex items-center justify-center font-bold border border-[#2C5E43]/20">
+                🏷️
+              </div>
+              <h3 className="font-bold text-sm text-[#1F2421] group-hover:text-[#2C5E43] transition-colors">
+                Smart Catalog
+              </h3>
+              <p className="text-[#59615C] text-[11px] leading-relaxed">
+                Automatically infer product categories, subcategories, craft materials, and search tags.
+              </p>
+            </div>
+            <span className="text-[#2C5E43] font-semibold text-[11px] flex items-center gap-1">
+              Analyze Products →
+            </span>
+          </Link>
+
+          {/* Card 3: AI Description */}
+          <Link
+            href="/dashboard/add-product?step=4"
+            className="craft-card p-4 flex flex-col justify-between space-y-3 group hover:border-[#D99B26] transition-all"
+          >
+            <div className="space-y-1.5">
+              <div className="w-8 h-8 rounded-lg bg-[#FFFBF0] text-[#D99B26] flex items-center justify-center font-bold border border-[#D99B26]/20">
+                📝
+              </div>
+              <h3 className="font-bold text-sm text-[#1F2421] group-hover:text-[#D99B26] transition-colors">
+                AI Description
+              </h3>
+              <p className="text-[#59615C] text-[11px] leading-relaxed">
+                Generate high-converting titles, descriptions, and features from regional voice/text input.
+              </p>
+            </div>
+            <span className="text-[#D99B26] font-semibold text-[11px] flex items-center gap-1">
+              Generate Listing →
+            </span>
+          </Link>
+
+          {/* Card 4: Price Advisor */}
+          <Link
+            href="/price-assistant"
+            className="craft-card p-4 flex flex-col justify-between space-y-3 group hover:border-[#6B1D2F] transition-all"
+          >
+            <div className="space-y-1.5">
+              <div className="w-8 h-8 rounded-lg bg-[#FDF2F4] text-[#6B1D2F] flex items-center justify-center font-bold border border-[#6B1D2F]/20">
+                ⚖️
+              </div>
+              <h3 className="font-bold text-sm text-[#1F2421] group-hover:text-[#6B1D2F] transition-colors">
+                Price Advisor
+              </h3>
+              <p className="text-[#59615C] text-[11px] leading-relaxed">
+                Calculate fair craft valuation ranges based on labor hours, materials, and regional market index.
+              </p>
+            </div>
+            <span className="text-[#6B1D2F] font-semibold text-[11px] flex items-center gap-1">
+              Open Price Advisor →
+            </span>
+          </Link>
+        </div>
       </div>
 
       {/* AI Market Insight Highlights Box */}

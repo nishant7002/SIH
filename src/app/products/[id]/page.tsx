@@ -23,12 +23,15 @@ import {
   Award,
   ChevronLeft,
   CheckCircle2,
-  Share2
+  Share2,
+  Heart
 } from 'lucide-react';
+import { useWishlist } from '../../../hooks/useWishlist';
 
 export default function ProductDetailPage() {
   const params = useParams();
   const id = params.id as string;
+  const { isInWishlist, toggleWishlist } = useWishlist();
 
   const [product, setProduct] = useState<Product | null>(null);
   const [artisan, setArtisan] = useState<Artisan | null>(null);
@@ -164,8 +167,15 @@ export default function ProductDetailPage() {
         <div className="lg:col-span-6 space-y-6">
           <div>
             <div className="flex items-center justify-between text-xs font-semibold text-[#C85A32] uppercase tracking-wider mb-1">
-              <span>{product.category}</span>
-              <span className="text-[#59615C] flex items-center gap-1 font-normal">
+              <span className="flex items-center gap-2">
+                <span>{product.category}</span>
+                {product.isAiAssisted && (
+                  <span className="bg-[#EBF4EF] text-[#2C5E43] text-[10px] font-bold px-2 py-0.5 rounded-full border border-[#2C5E43]/20 lowercase">
+                    ✨ AI-assisted listing
+                  </span>
+                )}
+              </span>
+              <span className="text-[#59615C] font-normal flex items-center gap-1">
                 <Star className="w-4 h-4 fill-[#D99B26] text-[#D99B26]" />
                 <strong className="text-[#1F2421]">{product.rating}</strong> ({product.reviewCount} reviews)
               </span>
@@ -253,7 +263,7 @@ export default function ProductDetailPage() {
           </div>
 
           {/* CTAs & Inquiry Buttons */}
-          <div className="flex flex-wrap gap-4 pt-2">
+          <div className="flex flex-wrap gap-3 pt-2">
             <button
               onClick={handleAddToCart}
               className="flex-1 bg-[#6B1D2F] hover:bg-[#4A121F] text-white py-3.5 px-6 rounded-xl font-bold text-sm shadow-md transition-all flex items-center justify-center gap-2"
@@ -264,10 +274,28 @@ export default function ProductDetailPage() {
 
             <button
               onClick={() => setIsInquiryModalOpen(true)}
-              className="bg-[#FDFAF6] hover:bg-[#F7F3EE] text-[#C85A32] border-2 border-[#C85A32] py-3.5 px-6 rounded-xl font-bold text-sm transition-all flex items-center gap-2"
+              className="bg-[#FDFAF6] hover:bg-[#F7F3EE] text-[#C85A32] border-2 border-[#C85A32] py-3.5 px-5 rounded-xl font-bold text-sm transition-all flex items-center gap-2"
             >
               <MessageSquare className="w-4 h-4" />
               <span>Inquire Artisan</span>
+            </button>
+
+            <button
+              onClick={() => {
+                if (product) {
+                  const added = toggleWishlist(product.id);
+                  setToastMessage(added ? `Added "${product.name}" to Wishlist!` : `Removed "${product.name}" from Wishlist.`);
+                }
+              }}
+              className={`py-3.5 px-5 rounded-xl font-bold text-sm transition-all flex items-center gap-2 border-2 ${
+                product && isInWishlist(product.id)
+                  ? 'bg-[#6B1D2F] text-white border-[#6B1D2F] shadow-sm'
+                  : 'bg-white hover:bg-[#F7F3EE] text-[#6B1D2F] border-[#6B1D2F]'
+              }`}
+              aria-label={product && isInWishlist(product.id) ? 'Remove from Wishlist' : 'Add to Wishlist'}
+            >
+              <Heart className={`w-4 h-4 ${product && isInWishlist(product.id) ? 'fill-white text-white' : ''}`} />
+              <span>{product && isInWishlist(product.id) ? 'Saved to Wishlist' : 'Add to Wishlist'}</span>
             </button>
           </div>
 

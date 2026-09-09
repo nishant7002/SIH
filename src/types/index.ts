@@ -3,17 +3,22 @@ export interface Product {
   name: string;
   craft: string;
   category: string;
+  subcategory?: string;
   region: string;
   state: string;
   artisanId: string;
   artisanName: string;
   material: string;
   description: string;
+  shortDescription?: string;
+  keyFeatures?: string[];
   price: number;
   estimatedCost: number;
   rating: number;
   reviewCount: number;
   image: string;
+  enhancedImage?: string;
+  isAiAssisted?: boolean;
   gallery?: string[];
   tags: string[];
   dimensions?: string;
@@ -74,7 +79,8 @@ export interface PricePrediction {
   recommendedPrice: number;
   minPrice: number;
   maxPrice: number;
-  confidenceScore: number; // e.g. 84%
+  confidenceScore: number; // e.g. 88
+  confidenceLevel: 'High Confidence' | 'Medium Confidence' | 'Moderate Confidence';
   artisanMargin: number;
   marginPercentage: number;
   marketPosition: 'Value' | 'Competitive' | 'Premium' | 'Luxury';
@@ -154,4 +160,56 @@ export interface User {
   role: 'artisan' | 'buyer';
   artisanId?: string;
   avatar?: string;
+}
+
+/* SIH26090 AI Feature Service Interfaces */
+
+export interface ImageEnhancementResult {
+  originalUrl: string;
+  enhancedUrl: string;
+  enhancementsApplied: string[];
+  aspectRatio: string;
+  lightingImprovementScore: string;
+}
+
+export interface ProductRecognitionResult {
+  category: string;
+  subcategory: string;
+  craft: string;
+  material: string;
+  suggestedRegion: string;
+  tags: string[];
+  confidenceScore: number;
+  confidenceLevel: 'High confidence' | 'Medium confidence' | 'Low confidence';
+  detectedAttributes: { name: string; value: string }[];
+}
+
+export interface DescriptionGenerationInput {
+  productName?: string;
+  category?: string;
+  subcategory?: string;
+  craft?: string;
+  material?: string;
+  region?: string;
+  artisanNotes?: string;
+  regionalVoiceInput?: string; // Regional language voice/text input
+  dimensions?: string;
+  verifiedDetailsOnly?: boolean;
+}
+
+export interface DescriptionGenerationResult {
+  title: string;
+  shortDescription: string;
+  detailedDescription: string;
+  keyFeatures: string[];
+  searchTags: string[];
+  structuredMetadata: {
+    category: string;
+    craft: string;
+    material: string;
+    region: string;
+    dimensions?: string;
+    productionMethod: string;
+  };
+  antiHallucinationNote: string;
 }
