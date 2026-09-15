@@ -17,7 +17,7 @@ export async function analyzeProductImage(
   // 1. If Gemini API Key exists, call real Gemini 1.5 Flash model
   if (apiKey && (userHint || '').trim().length > 0) {
     try {
-      const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+      const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
 
       const prompt = `
         You are an expert in Indian traditional handicrafts and folk arts.
@@ -54,8 +54,11 @@ export async function analyzeProductImage(
         confidenceLevel: parsed.confidenceLevel || 'High confidence',
         detectedAttributes: parsed.detectedAttributes || []
       };
-    } catch (err) {
-      console.warn('Gemini catalog analysis failed, using fallback pattern matching:', err);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      console.error('[CatalogAI] Gemini call failed:', msg);
+      console.error('[CatalogAI] API key present?', !!apiKey, '| Key prefix:', apiKey?.slice(0, 6));
+      console.warn('[CatalogAI] Falling back to pattern matching...');
     }
   }
 

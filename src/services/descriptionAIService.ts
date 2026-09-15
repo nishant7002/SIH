@@ -10,7 +10,7 @@ export async function generateProductListingDescription(
   // 1. If Gemini API Key exists, call real Gemini 1.5 Model
   if (apiKey) {
     try {
-      const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+      const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
 
       const prompt = `
         You are an AI product listing assistant for Indian handicraft artisans.
