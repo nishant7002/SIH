@@ -14,52 +14,55 @@ export async function analyzeProductImage(
   imageUrl: string,
   userHint?: string
 ): Promise<ProductRecognitionResult> {
-  // 1. If Gemini API Key exists, call real Gemini 1.5 Flash model
+  // 1. If Gemini API Key exists, call real Gemini 3.6 Flash model (with retry)
   if (apiKey && (userHint || '').trim().length > 0) {
-    try {
-      const model = genAI.getGenerativeModel({ model: 'gemini-3.6-flash' });
+    const prompt = `
+      You are an expert in Indian traditional handicrafts and folk arts.
+      An artisan describes their product: "${userHint}".
+      Based on this, return ONLY a JSON object with this exact structure (no markdown, no extra text):
+      {
+        "category": "Primary marketplace category (e.g. Paintings & Wall Art, Ceramics & Pottery, Textiles & Embroidery, Toys & Wooden Crafts, Metalware & Sculptures, Jewellery & Accessories)",
+        "subcategory": "Specific subcategory (e.g. Folk & Tribal Painting, Decorative Glazed Pottery)",
+        "craft": "Specific craft name (e.g. Madhubani Painting, Jaipur Blue Pottery, Kutch Embroidery, Dhokra Art)",
+        "material": "Primary raw material used",
+        "suggestedRegion": "City, State (e.g. Mithila, Bihar)",
+        "tags": ["tag1", "tag2", "tag3", "tag4", "tag5"],
+        "confidenceScore": 94,
+        "confidenceLevel": "High confidence",
+        "detectedAttributes": [
+          { "name": "Attribute Name", "value": "Attribute Value" },
+          { "name": "Attribute Name", "value": "Attribute Value" }
+        ]
+      }
+    `;
 
-      const prompt = `
-        You are an expert in Indian traditional handicrafts and folk arts.
-        An artisan describes their product: "${userHint}".
-        Based on this, return ONLY a JSON object with this exact structure (no markdown, no extra text):
-        {
-          "category": "Primary marketplace category (e.g. Paintings & Wall Art, Ceramics & Pottery, Textiles & Embroidery, Toys & Wooden Crafts, Metalware & Sculptures, Jewellery & Accessories)",
-          "subcategory": "Specific subcategory (e.g. Folk & Tribal Painting, Decorative Glazed Pottery)",
-          "craft": "Specific craft name (e.g. Madhubani Painting, Jaipur Blue Pottery, Kutch Embroidery, Dhokra Art)",
-          "material": "Primary raw material used",
-          "suggestedRegion": "City, State (e.g. Mithila, Bihar)",
-          "tags": ["tag1", "tag2", "tag3", "tag4", "tag5"],
-          "confidenceScore": 94,
-          "confidenceLevel": "High confidence",
-          "detectedAttributes": [
-            { "name": "Attribute Name", "value": "Attribute Value" },
-            { "name": "Attribute Name", "value": "Attribute Value" }
-          ]
-        }
-      `;
-
-      const result = await model.generateContent(prompt);
-      const responseText = result.response.text().replace(/```json|```/g, '').trim();
-      const parsed = JSON.parse(responseText);
-
-      return {
-        category: parsed.category,
-        subcategory: parsed.subcategory,
-        craft: parsed.craft,
-        material: parsed.material,
-        suggestedRegion: parsed.suggestedRegion,
-        tags: parsed.tags,
-        confidenceScore: parsed.confidenceScore || 90,
-        confidenceLevel: parsed.confidenceLevel || 'High confidence',
-        detectedAttributes: parsed.detectedAttributes || []
-      };
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : String(err);
-      console.error('[CatalogAI] Gemini call failed:', msg);
-      console.error('[CatalogAI] API key present?', !!apiKey, '| Key prefix:', apiKey?.slice(0, 6));
-      console.warn('[CatalogAI] Falling back to pattern matching...');
+    for (let attempt = 1; attempt <= 3; attempt++) {
+      try {
+        const model = genAI.getGenerativeModel({ model: 'gemini-3.6-flash' });
+        const result = await model.generateContent(prompt);
+        const responseText = result.response.text().replace(/```json|```/g, '').trim();
+        const parsed = JSON.parse(responseText);
+        return {
+          category: parsed.category,
+          subcategory: parsed.subcategory,
+          craft: parsed.craft,
+          material: parsed.material,
+          suggestedRegion: parsed.suggestedRegion,
+          tags: parsed.tags,
+          confidenceScore: parsed.confidenceScore || 90,
+          confidenceLevel: parsed.confidenceLevel || 'High confidence',
+          detectedAttributes: parsed.detectedAttributes || []
+        };
+      } catch (err: unknown) {
+        const msg = err instanceof Error ? err.message : String(err);
+        const isRetryable = msg.includes('503') || msg.includes('429') || msg.includes('500');
+        console.warn(`[CatalogAI] Attempt ${attempt}/3 failed: ${msg}`);
+        if (!isRetryable || attempt === 3) break;
+        // Exponential backoff: 1s, 2s, 4s
+        await new Promise((r) => setTimeout(r, 1000 * Math.pow(2, attempt - 1)));
+      }
     }
+    console.warn('[CatalogAI] All retries exhausted, using pattern matching fallback.');
   }
 
   // 2. Fallback: keyword pattern-matching for demo reliability
