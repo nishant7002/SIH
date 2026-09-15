@@ -17,7 +17,7 @@ export async function analyzeProductImage(
   // 1. If Gemini API Key exists, call real Gemini 1.5 Flash model
   if (apiKey && (userHint || '').trim().length > 0) {
     try {
-      const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
+      const model = genAI.getGenerativeModel({ model: 'gemini-3.6-flash' });
 
       const prompt = `
         You are an expert in Indian traditional handicrafts and folk arts.
