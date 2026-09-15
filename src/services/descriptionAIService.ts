@@ -4,10 +4,22 @@ import { DescriptionGenerationInput, DescriptionGenerationResult } from '../type
 const apiKey = process.env.NEXT_PUBLIC_GEMINI_API_KEY;
 const genAI = new GoogleGenerativeAI(apiKey || '');
 
+const CANDIDATE_MODELS = ['gemini-3.6-flash', 'gemini-3.8-flash', 'gemini-flash-latest'];
+
+function extractAndParseJson<T>(rawText: string): T {
+  let cleaned = rawText.replace(/```json/gi, '').replace(/```/g, '').trim();
+  const firstBrace = cleaned.indexOf('{');
+  const lastBrace = cleaned.lastIndexOf('}');
+  if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
+    cleaned = cleaned.substring(firstBrace, lastBrace + 1);
+  }
+  return JSON.parse(cleaned) as T;
+}
+
 export async function generateProductListingDescription(
   input: DescriptionGenerationInput
 ): Promise<DescriptionGenerationResult> {
-  // 1. If Gemini API Key exists, call real Gemini 3.6 Flash model (with retry)
+  // 1. If Gemini API Key exists, call real Gemini model chain
   if (apiKey) {
     const prompt = `
       You are an AI product listing assistant for Indian handicraft artisans.
@@ -24,18 +36,24 @@ export async function generateProductListingDescription(
       }
     `;
 
-    for (let attempt = 1; attempt <= 3; attempt++) {
+    for (const modelName of CANDIDATE_MODELS) {
       try {
-        const model = genAI.getGenerativeModel({ model: 'gemini-3.6-flash' });
+        const model = genAI.getGenerativeModel({ model: modelName });
         const result = await model.generateContent(prompt);
-        const responseText = result.response.text().replace(/```json|```/g, '').trim();
-        const parsed = JSON.parse(responseText);
+        const parsed = extractAndParseJson<{
+          title: string;
+          shortDescription: string;
+          detailedDescription: string;
+          keyFeatures: string[];
+          searchTags: string[];
+        }>(result.response.text());
+
         return {
           title: parsed.title,
           shortDescription: parsed.shortDescription,
           detailedDescription: parsed.detailedDescription,
-          keyFeatures: parsed.keyFeatures,
-          searchTags: parsed.searchTags,
+          keyFeatures: parsed.keyFeatures || [],
+          searchTags: parsed.searchTags || [],
           structuredMetadata: {
             category: input.category || 'Handicrafts',
             craft: input.craft || 'Traditional Craft',
@@ -44,17 +62,14 @@ export async function generateProductListingDescription(
             dimensions: input.dimensions,
             productionMethod: `Traditional ${input.craft} Handwork`
           },
-          antiHallucinationNote: 'Gemini 3.6 Flash AI: Excluded unverified certifications & claims.'
+          antiHallucinationNote: 'Gemini AI Verified: Excluded unverified certifications & claims.'
         };
       } catch (err: unknown) {
         const msg = err instanceof Error ? err.message : String(err);
-        const isRetryable = msg.includes('503') || msg.includes('429') || msg.includes('500');
-        console.warn(`[DescriptionAI] Attempt ${attempt}/3 failed: ${msg}`);
-        if (!isRetryable || attempt === 3) break;
-        await new Promise((r) => setTimeout(r, 1000 * Math.pow(2, attempt - 1)));
+        console.warn(`[DescriptionAI] Model ${modelName} call failed: ${msg}. Trying next candidate model...`);
       }
     }
-    console.warn('[DescriptionAI] All retries exhausted, using template fallback.');
+    console.warn('[DescriptionAI] All Gemini candidate models failed. Using template fallback.');
   }
 
   // Fallback prototype response if API key is not configured yet

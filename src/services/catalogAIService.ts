@@ -4,9 +4,21 @@ import { ProductRecognitionResult } from '../types';
 const apiKey = process.env.NEXT_PUBLIC_GEMINI_API_KEY;
 const genAI = new GoogleGenerativeAI(apiKey || '');
 
+const CANDIDATE_MODELS = ['gemini-3.6-flash', 'gemini-3.8-flash', 'gemini-flash-latest'];
+
+function extractAndParseJson<T>(rawText: string): T {
+  let cleaned = rawText.replace(/```json/gi, '').replace(/```/g, '').trim();
+  const firstBrace = cleaned.indexOf('{');
+  const lastBrace = cleaned.lastIndexOf('}');
+  if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
+    cleaned = cleaned.substring(firstBrace, lastBrace + 1);
+  }
+  return JSON.parse(cleaned) as T;
+}
+
 /**
  * AI Product Recognition & Smart Cataloging Service.
- * Uses Google Gemini 1.5 Flash to infer category, craft, material, region, and tags
+ * Uses Google Gemini AI to infer category, craft, material, region, and tags
  * from the artisan's text description of their product.
  * Falls back to keyword pattern-matching if API key is absent or call fails.
  */
@@ -14,7 +26,7 @@ export async function analyzeProductImage(
   imageUrl: string,
   userHint?: string
 ): Promise<ProductRecognitionResult> {
-  // 1. If Gemini API Key exists, call real Gemini 3.6 Flash model (with retry)
+  // 1. If Gemini API Key exists, call real Gemini model chain
   if (apiKey && (userHint || '').trim().length > 0) {
     const prompt = `
       You are an expert in Indian traditional handicrafts and folk arts.
@@ -36,33 +48,28 @@ export async function analyzeProductImage(
       }
     `;
 
-    for (let attempt = 1; attempt <= 3; attempt++) {
+    for (const modelName of CANDIDATE_MODELS) {
       try {
-        const model = genAI.getGenerativeModel({ model: 'gemini-3.6-flash' });
+        const model = genAI.getGenerativeModel({ model: modelName });
         const result = await model.generateContent(prompt);
-        const responseText = result.response.text().replace(/```json|```/g, '').trim();
-        const parsed = JSON.parse(responseText);
+        const parsed = extractAndParseJson<ProductRecognitionResult>(result.response.text());
         return {
           category: parsed.category,
           subcategory: parsed.subcategory,
           craft: parsed.craft,
           material: parsed.material,
           suggestedRegion: parsed.suggestedRegion,
-          tags: parsed.tags,
-          confidenceScore: parsed.confidenceScore || 90,
+          tags: parsed.tags || [],
+          confidenceScore: parsed.confidenceScore || 92,
           confidenceLevel: parsed.confidenceLevel || 'High confidence',
           detectedAttributes: parsed.detectedAttributes || []
         };
       } catch (err: unknown) {
         const msg = err instanceof Error ? err.message : String(err);
-        const isRetryable = msg.includes('503') || msg.includes('429') || msg.includes('500');
-        console.warn(`[CatalogAI] Attempt ${attempt}/3 failed: ${msg}`);
-        if (!isRetryable || attempt === 3) break;
-        // Exponential backoff: 1s, 2s, 4s
-        await new Promise((r) => setTimeout(r, 1000 * Math.pow(2, attempt - 1)));
+        console.warn(`[CatalogAI] Model ${modelName} call failed: ${msg}. Trying next candidate model...`);
       }
     }
-    console.warn('[CatalogAI] All retries exhausted, using pattern matching fallback.');
+    console.warn('[CatalogAI] All Gemini candidate models failed. Using pattern matching fallback.');
   }
 
   // 2. Fallback: keyword pattern-matching for demo reliability
