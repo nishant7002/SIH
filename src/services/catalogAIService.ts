@@ -1,21 +1,69 @@
+import { GoogleGenerativeAI } from '@google/generative-ai';
 import { ProductRecognitionResult } from '../types';
+
+const apiKey = process.env.NEXT_PUBLIC_GEMINI_API_KEY;
+const genAI = new GoogleGenerativeAI(apiKey || '');
 
 /**
  * AI Product Recognition & Smart Cataloging Service.
- * Infers category, subcategory, craft technique, materials, region, and tags from product imagery.
- * Ready for future Google Gemini 1.5 Pro / Vision API integration.
- * API Endpoint readiness: POST /api/v1/ai/analyze-catalog
+ * Uses Google Gemini 1.5 Flash to infer category, craft, material, region, and tags
+ * from the artisan's text description of their product.
+ * Falls back to keyword pattern-matching if API key is absent or call fails.
  */
 export async function analyzeProductImage(
   imageUrl: string,
   userHint?: string
 ): Promise<ProductRecognitionResult> {
-  // Simulate vision analysis network delay (450ms)
+  // 1. If Gemini API Key exists, call real Gemini 1.5 Flash model
+  if (apiKey && (userHint || '').trim().length > 0) {
+    try {
+      const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+
+      const prompt = `
+        You are an expert in Indian traditional handicrafts and folk arts.
+        An artisan describes their product: "${userHint}".
+        Based on this, return ONLY a JSON object with this exact structure (no markdown, no extra text):
+        {
+          "category": "Primary marketplace category (e.g. Paintings & Wall Art, Ceramics & Pottery, Textiles & Embroidery, Toys & Wooden Crafts, Metalware & Sculptures, Jewellery & Accessories)",
+          "subcategory": "Specific subcategory (e.g. Folk & Tribal Painting, Decorative Glazed Pottery)",
+          "craft": "Specific craft name (e.g. Madhubani Painting, Jaipur Blue Pottery, Kutch Embroidery, Dhokra Art)",
+          "material": "Primary raw material used",
+          "suggestedRegion": "City, State (e.g. Mithila, Bihar)",
+          "tags": ["tag1", "tag2", "tag3", "tag4", "tag5"],
+          "confidenceScore": 94,
+          "confidenceLevel": "High confidence",
+          "detectedAttributes": [
+            { "name": "Attribute Name", "value": "Attribute Value" },
+            { "name": "Attribute Name", "value": "Attribute Value" }
+          ]
+        }
+      `;
+
+      const result = await model.generateContent(prompt);
+      const responseText = result.response.text().replace(/```json|```/g, '').trim();
+      const parsed = JSON.parse(responseText);
+
+      return {
+        category: parsed.category,
+        subcategory: parsed.subcategory,
+        craft: parsed.craft,
+        material: parsed.material,
+        suggestedRegion: parsed.suggestedRegion,
+        tags: parsed.tags,
+        confidenceScore: parsed.confidenceScore || 90,
+        confidenceLevel: parsed.confidenceLevel || 'High confidence',
+        detectedAttributes: parsed.detectedAttributes || []
+      };
+    } catch (err) {
+      console.warn('Gemini catalog analysis failed, using fallback pattern matching:', err);
+    }
+  }
+
+  // 2. Fallback: keyword pattern-matching for demo reliability
   await new Promise((resolve) => setTimeout(resolve, 450));
 
   const hintLower = (userHint || '').toLowerCase();
 
-  // Pattern recognition lookup for prototype demonstration
   if (hintLower.includes('painting') || hintLower.includes('madhubani') || hintLower.includes('canvas') || hintLower.includes('warli') || hintLower.includes('pattachitra')) {
     return {
       category: 'Paintings & Wall Art',
@@ -87,7 +135,7 @@ export async function analyzeProductImage(
     };
   }
 
-  // Default smart recognition output (Textiles & Accessories / Embroidery)
+  // Default smart recognition output
   return {
     category: 'Home Decor & Textiles',
     subcategory: 'Handwoven Textile & Embroidery',
